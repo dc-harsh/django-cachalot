@@ -19,6 +19,7 @@ from .utils import (
     _get_table_cache_keys, _get_tables_from_sql,
     UncachableQuery, is_cachable, filter_cachable,
 )
+import time
 
 
 WRITE_COMPILERS = (SQLInsertCompiler, SQLUpdateCompiler, SQLDeleteCompiler)
@@ -98,10 +99,13 @@ def _patch_compiler(original):
         except (EmptyResultSet, UncachableQuery):
             return execute_query_func()
 
-        return _get_result_or_execute_query(
-            execute_query_func,
-            cachalot_caches.get_cache(db_alias=db_alias),
-            cache_key, table_cache_keys)
+        try:
+            return _get_result_or_execute_query(
+                execute_query_func,
+                cachalot_caches.get_cache(db_alias=db_alias),
+                cache_key, table_cache_keys)
+        except Exception:
+            return execute_query_func()
 
     return inner
 
