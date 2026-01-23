@@ -20,6 +20,7 @@ from .utils import (
     UncachableQuery, is_cachable, filter_cachable,
 )
 import time
+import random
 
 
 WRITE_COMPILERS = (SQLInsertCompiler, SQLUpdateCompiler, SQLDeleteCompiler)
@@ -99,13 +100,22 @@ def _patch_compiler(original):
         except (EmptyResultSet, UncachableQuery):
             return execute_query_func()
 
-        try:
-            return _get_result_or_execute_query(
-                execute_query_func,
-                cachalot_caches.get_cache(db_alias=db_alias),
-                cache_key, table_cache_keys)
-        except Exception:
-            return execute_query_func()
+        idx_map = {
+            0: (1, 10),
+            1: (5, 25),
+            2: (10, 100)
+        }
+
+        for idx in range(3):
+            try:
+                return _get_result_or_execute_query(
+                    execute_query_func,
+                    cachalot_caches.get_cache(db_alias=db_alias),
+                    cache_key, table_cache_keys)
+            except Exception:
+                time.sleep(random.randrange(idx_map[idx][0], idx_map[idx][1])/1000)
+        
+        return execute_query_func()
 
     return inner
 
